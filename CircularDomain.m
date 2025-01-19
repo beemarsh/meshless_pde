@@ -1,4 +1,4 @@
-classdef CDomain
+classdef CircularDomain
     %CDomain A class for creating and visualizing a 2D circular domain
     %   Example usage:
     %       circleObj = CDomain([0, 0], 1);       % Circle centered at (0,0) with radius 1
@@ -19,7 +19,7 @@ classdef CDomain
 
     methods
         % Constructor
-        function obj = CDomain(center, radius)
+        function obj = CircularDomain(center, radius)
             if nargin > 0
                 obj.Center = center;
                 obj.Radius = radius;
