@@ -26,7 +26,7 @@ title("True Surface Plot Franke's Function")
 hold on;
 
 % Generating a random 2 dimensional data using Halton Sequence
-num_samples = 10000;
+num_samples = 500;
 halton_seq = haltonset(2);
 random_points = net(halton_seq, num_samples)'; % A column vector representing random x and y values from halton sequence
 
@@ -41,7 +41,7 @@ plot3(random_points(1,:), random_points(2,:), Z_samples, 'o', 'LineWidth',6);
 
 
 % Kernel Functions and Shape Parameter
-mu = 0.005;
+mu = 0.05;
 %K = @(x,y) exp(1/mu*x'*y);
 K = @(x,y) exp(-1/mu*norm(x-y)^2);
 
@@ -82,6 +82,7 @@ figure
 
 surf(X,Y,abs(Z-Z_approximation));
 title('Error between true and RBF Approximated values')
+
 
 % Using Polynomials + RBF for better approximation
 
