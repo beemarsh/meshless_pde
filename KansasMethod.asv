@@ -75,22 +75,21 @@ end
 % end
 
 
-% Generate grid for interpolation
-[xq, yq] = meshgrid(linspace(-3, 3, 100), linspace(-3, 3, 100));
+% Create grid for interpolation
+[xq, yq] = meshgrid(linspace(-3, 3, 100), linspace(-3, 3, 100)); % Adjust resolution
 
+% Logical Mask to Exclude Bottom-Left Quadrant
 L_shape_mask = (xq >= -3 & xq <= 3 & yq >= -3 & yq <= 3) & ...
                ~((xq <= 0 & yq <= 0)); % Exclude bottom-left quadrant
-
 
 % Number of eigenfunctions to plot
 num_eigenfunctions = 8;
 
+% Plot eigenfunctions
 figure;
 for i = 1:num_eigenfunctions
-    % Extract real part of eigenfunction
-    eigenfunction_values = real(alpha(1:length(X_interior), i)); 
-
     % Interpolate eigenfunction values
+    eigenfunction_values = alpha(1:length(X_interior), i); % Only interior points
     eigenfunction_grid = griddata(X_interior, Y_interior, eigenfunction_values, xq, yq, 'cubic');
 
     % Apply the mask
@@ -98,9 +97,9 @@ for i = 1:num_eigenfunctions
 
     % Plot contour
     subplot(4, 2, i); % Arrange in a 4x2 grid
-    contourf(xq, yq, eigenfunction_grid, 200, 'LineColor', 'none'); % 200 levels
+    contourf(xq, yq, eigenfunction_grid, 20, 'LineColor', 'none'); % 20 levels
     colorbar;
-    title(['Eigenfunction ', num2str(i), ' (\lambda = ', num2str(real(lambda(i))), ')']);
+    title(['Eigenfunction ', num2str(i), ' (\lambda = ', num2str(lambda(i)), ')']);
     xlabel('X');
     ylabel('Y');
     axis equal;
