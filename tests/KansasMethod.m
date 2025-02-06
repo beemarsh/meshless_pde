@@ -4,9 +4,11 @@ new_L = LDomain([-3,3],[-3,0],[-3,0], 'bottom-left');
 
 new_L = new_L.generateLShape(40);
 
-new_L = new_L.generateBoundaryPoints(10);
+new_L = new_L.generateBoundaryPoints(40);
 
 new_L = new_L.generateGhostPoints(10, 2, 0.1);
+
+new_L.scatterPlot("L-Shaped Domain",true, false);
 
 %new_L.scatterPlot("L-Shaped Domain",true, true);
 
@@ -64,7 +66,7 @@ end
 % 
 % % Print eigenvalues
 % disp('Eigenvalues:');
-% disp(lambda);
+disp(lambda);
 % 
 % % Print eigenfunctions
 % disp('Eigenfunctions (First Few Entries for Each):');
