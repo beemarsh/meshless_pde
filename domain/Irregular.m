@@ -1,4 +1,4 @@
-classdef IrregularDomain
+classdef Irregular
     % IrregularDomain A class for creating and visualizing an irregular 2D domain
     %   Example usage:
     %       vertices = [0, 1, 1, 0; 0, 0, 1, 1]; % Square
@@ -21,7 +21,7 @@ classdef IrregularDomain
 
     methods
         % Constructor
-        function obj = IrregularDomain(vertices, holeVertices)
+        function obj = Irregular(vertices, holeVertices)
             if nargin > 0
                 obj.Vertices = vertices;
                 if nargin > 1

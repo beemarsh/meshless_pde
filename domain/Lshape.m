@@ -1,4 +1,4 @@
-classdef LDomain
+classdef Lshape
     properties        
         LPoints % The Generate 2 Dimensional LShapeDomain (It is generated only after running the generate function
         GhostPoints
@@ -14,7 +14,7 @@ classdef LDomain
 
 
     methods
-        function obj = LDomain(domain, x_bounds, y_bounds, orientation)
+        function obj = Lshape(domain, x_bounds, y_bounds, orientation)
             if nargin > 0
                 % Validate input arguments
                 %validateattributes(domain, {'numeric'}, {'size', [1, 2,3,4]});

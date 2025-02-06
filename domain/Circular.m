@@ -1,4 +1,4 @@
-classdef CircularDomain
+classdef Circular
    %CIRCULARDOMAIN A class for creating and visualizing a 2D circular domain
    %   Example usage:
    %       circleObj = CircularDomain([0, 0], 1);          % Circle centered at (0,0) with radius 1
@@ -17,7 +17,7 @@ classdef CircularDomain
    end
    methods
        % Constructor
-       function obj = CircularDomain(center, radius)
+       function obj = Circular(center, radius)
            if nargin > 0
                obj.Center = center;
                obj.Radius = radius;
