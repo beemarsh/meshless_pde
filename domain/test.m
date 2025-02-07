@@ -1,5 +1,5 @@
 % Create a square domain object (domain: [xmin, xmax, ymin, ymax])
-squareObj = SquareDomain([0, 1, 0, 1]);
+squareObj = Square([0, 1, 0, 1]);
 
 % Generate interior points (a 21x21 grid)
 squareObj = squareObj.generateSquare(21);
