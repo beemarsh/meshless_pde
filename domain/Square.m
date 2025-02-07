@@ -1,4 +1,4 @@
-classdef SquareDomain
+classdef Square
     properties        
         SPoints        % (2 x N) Interior (collocation) points in the square
         BoundaryPoints % (2 x M) Points on the boundary of the square
@@ -11,7 +11,7 @@ classdef SquareDomain
 
     methods
         % Constructor
-        function obj = SquareDomain(domain)
+        function obj = Square(domain)
             % domain should be a 1x4 vector: [xmin, xmax, ymin, ymax]
             if nargin > 0
                 validateattributes(domain, {'numeric'}, {'vector', 'numel', 4});
@@ -21,16 +21,24 @@ classdef SquareDomain
         
         % Generate interior (collocation) points in the square
         function obj = generateSquare(obj, numPoints)
-            % numPoints: number of points in each direction
-            xmin = obj.Domain(1); xmax = obj.Domain(2);
-            ymin = obj.Domain(3); ymax = obj.Domain(4);
-            % Create a uniform grid over the square
-            x_domain = linspace(xmin, xmax, numPoints);
-            y_domain = linspace(ymin, ymax, numPoints);
-            [X, Y] = meshgrid(x_domain, y_domain);
-            % Store as a 2 x N array
-            obj.SPoints = [X(:)'; Y(:)'];
-        end
+    % numPoints: desired number of interior points in each direction
+    xmin = obj.Domain(1); xmax = obj.Domain(2);
+    ymin = obj.Domain(3); ymax = obj.Domain(4);
+    
+    % Generate a grid with numPoints+2 points in each direction,
+    % then remove the boundary points.
+    x_domain = linspace(xmin, xmax, numPoints+2);
+    y_domain = linspace(ymin, ymax, numPoints+2);
+    
+    % Remove the first and last entries so that only interior points remain
+    x_domain = x_domain(2:end-1);
+    y_domain = y_domain(2:end-1);
+    
+    [X, Y] = meshgrid(x_domain, y_domain);
+    
+    % Store as a 2 x N array (each column is a point)
+    obj.SPoints = [X(:)'; Y(:)'];
+end
         
         % Generate boundary points along the four edges of the square
         function obj = generateBoundaryPoints(obj, numPoints)

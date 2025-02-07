@@ -23,7 +23,7 @@ l=[1 1 2 2 1 3 2 3 1 ];
 
 
 % number of centers/collocation points(nodes)
-nodes=[20 30 50 70];
+nodes=[20];
 
 
 %shape parameter values
@@ -99,7 +99,6 @@ for nn=nodes
     coor(p2,3)=2*ones(length(p2),1);
     coor(q1,3)=3*ones(length(q1),1);coor(q2,3)=4*ones(length(q2),1);
 
-
     %define interior and boundary nodes' indices
     int_ind=find(coor(:,3)==0);
     intnode=coor(int_ind,1:2);% interior points
@@ -109,7 +108,8 @@ for nn=nodes
 
     % Interior and Boundary Points Figuring Out Complete
     % ***************************************************
-
+    
+    
     %per shape parameter
     for c=sp
         jj=jj+1;
@@ -140,6 +140,8 @@ for nn=nodes
         % only for interior points
         L_MQ = 2*cc^2./MQ-cc^4*DM(int_ind,:).^2./(MQ.^3);
 
+        
+
         % From the solution system, we get α values by α = B * inverse(A).
         % Here, B is L_MQ and A is mq. / operator finds the inverse.
         % Don't be confused because we are taking laplacian of B. If it was
@@ -149,6 +151,8 @@ for nn=nodes
        
 
         A = L_MQ/mq; %Calculating the local weights \alpha
+
+        display(size(A));
 
         %extract entries corresponding to interior nodes
         A = A(:,int_ind);
@@ -171,13 +175,14 @@ for nn=nodes
 
         exact_eigenvalues = pi^2*(m.^2.+l.^2)';
         approximate_eigenvalues = lam';
-        relative_error = (abs(lam-pi^2*(m.^2.+l.^2))./(pi^2*(m.^2.+l.^2)))';
+
+        relative_error = (abs(lam- pi^2*(m.^2.+l.^2))./(pi^2*(m.^2.+l.^2)))';
 
         %compute the exact/analytical eigenmodes and compare them with the numerical eigenmodes
         exact_eigenmode = sin(pi*coor(:,1)*m).*sin(pi*coor(:,2)*l);
         normf = sqrt(sum(exact_eigenmode.^2)); %compute the magnitudes of eigenmodes because the numerical eigenmodes were default normalized
 
-        %Collecting data of eigenvalues
+        % Collecting data of eigenvalues
         % All this code is doing below is storing the values in the above
         % declared vector. We are also calculating errors and storing them.
         smallest_eigenvalues(ii,jj,:)=lam;
@@ -187,14 +192,60 @@ for nn=nodes
         for k=1:length(m)
             firsteigmode_interior=exact_eigenmode(int_ind,k);
             error_eigenmode_k=abs(abs(firsteigmode_interior)-normf(k)*abs(alpha(1:ni,k)));
+            
             Err_eigenmodes_max(ii,jj,k)=max(error_eigenmode_k);
             Err_eigenmodes_relative(ii,jj,k)=max(error_eigenmode_k/max(firsteigmode_interior));
             Err_eigenmodes_rms(ii,jj,k)=sqrt(sum(error_eigenmode_k.^2)/ni);
         end
 
+         if ii==1&jj==1
+   %plot the contours of the exact eigenmodes
+   figure 
+   for j=1:9
+    coor(:,4)=exact_eigenmode(:,j);
+    Z=reshape(coor(:,4),size(X));
+    subplot(3,3,j)
+    %contourf(X,Y,Z,20);
+    surf(X,Y,Z);
+    hold on;
+    axis equal;
+    axis([0,1,0,1]);
+   end
+
+   %plot the contours of the numerical eigenmodes
+   figure
+   for j=1:9
+    coor(int_ind,4)=normf(j)*alpha(1:ni,j);
+    Z=reshape(coor(:,4),size(X));
+    subplot(3,3,j)
+    %contourf(X,Y,Z,20);
+    surf(X,Y,Z);
+    hold on;
+    axis equal;
+    axis([0,1,0,1]);
+   end
+
+
+   %plot the absolute contour errors of the eigenmodes
+   figure 
+   for j=1:9
+    coor(int_ind,4)=abs(abs(exact_eigenmode(int_ind,j))-abs(normf(j)*alpha(1:ni,j)));
+    Z=reshape(coor(:,4),size(X));
+    subplot(3,3,j)
+    %contourf(X,Y,Z,20);
+    surf(X,Y,Z);
+    hold on;
+    axis equal;
+    axis([0,1,0,1]);
+   end
+  end %end of if ii==1&jj==1
+
+
     end % end of for c=sp
 
 end %end of if ii==1&jj==1
+
+fprintf("COOR");;
 
 
 
@@ -207,179 +258,3 @@ fprintf('cputime= %6.2f\n',cpu);
 
 %end counting time
 %--------------------------------------------------------------------
-
-
-
-
-% Data visualization and analysis
-% Define colors
-color=['r','b','m','g','m','c','y','k','k'];
-
-
-% I.----------------------------------------------------
-%plot the error of eigenvalues w.r.t. sp and nodes
-figure
-subplot(1,2,1) %the first plot in this figure
-for ii=1:length(nodes)
-    jj=1;%plot the results when the first sp is used
-    scatter3((nodes(ii)+1)^2*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenvalues(ii,jj,:))), 'filled', color(ii));
-    hold on;
-    % Use plot3 to connect the points with lines
-    plot3((nodes(ii)+1)^2*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenvalues(ii,jj,:))), '-o', 'LineWidth', 1.5);
-    hold on;
-end;
-hold off;
-% Labeling the axes
-xlabel('Number of nodes');
-ylabel('Indices of eigenvalues');
-zlabel('log10(Errors of eigenvalues)');
-title('3D Scatter Plot of error of eigenvalues vs. the number of nodes');
-grid on;
-
-
-subplot(1,2,2)
-for jj=1:length(sp)
-    ii=1;%plot the results when the first #of nodes is used
-    scatter3(sp(jj)*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenvalues(ii,jj,:))), 'filled', color(jj));
-    hold on;
-    % Use plot3 to connect the points with lines
-    plot3(sp(jj)*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenvalues(ii,jj,:))), '-o', 'LineWidth', 1.5);
-    hold on;
-end;
-hold off;
-% Labeling the axes
-xlabel('Values of the RBF shape parameter');
-ylabel('Indices of eigenvalues');
-zlabel('log10(Errors of eigenvalues)');
-title('3D Scatter Plot of error of eigenvalues vs. the shape parameter');
-grid on;
-
-
-% II.----------------------------------------------------
-%plot the absolution max error of eigenmodes w.r.t. sp and nodes
-figure
-subplot(1,2,1) %the first plot in this figure
-for ii=1:length(nodes)
-    jj=1;%plot the results when the first sp is used
-    scatter3((nodes(ii)+1)^2*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenmodes_max(ii,jj,:))), 'filled', color(ii));
-    hold on;
-    % Use plot3 to connect the points with lines
-    plot3((nodes(ii)+1)^2*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenmodes_max(ii,jj,:))), '-o', 'LineWidth', 1.5);
-    hold on;
-end;
-hold off;
-% Labeling the axes
-xlabel('Number of nodes');
-ylabel('Indices of eigenvalues');
-zlabel('log10(Max Error of eigenmodes)');
-title('3D Scatter Plot of max error of eigenmodes vs. the number of nodes');
-grid on;
-
-
-subplot(1,2,2)
-for jj=1:length(sp)
-    ii=1;%plot the results when the first #of nodes is used
-    scatter3(sp(jj)*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenmodes_max(ii,jj,:))), 'filled', color(jj));
-    hold on;
-    % Use plot3 to connect the points with lines
-    plot3(sp(jj)*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenmodes_max(ii,jj,:))), '-o', 'LineWidth', 1.5);
-    hold on;
-end;
-hold off;
-% Labeling the axes
-xlabel('Values of the RBF shape parameter');
-ylabel('Indices of eigenvalues');
-zlabel('log10(Max Error of eigenmodes)');
-title('3D Scatter Plot of max error of eigenmodes vs. the shape parameter');
-grid on;
-
-
-
-
-
-
-% III.----------------------------------------------------
-%plot the relative error of eigenmodes w.r.t. sp and nodes
-figure
-subplot(1,2,1) %the first plot in this figure
-for ii=1:length(nodes)
-    jj=1;%plot the results when the first sp is used
-    scatter3((nodes(ii)+1)^2*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenmodes_relative(ii,jj,:))), 'filled', color(ii));
-    hold on;
-    % Use plot3 to connect the points with lines
-    plot3((nodes(ii)+1)^2*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenmodes_relative(ii,jj,:))), '-o', 'LineWidth', 1.5);
-    hold on;
-end;
-hold off;
-% Labeling the axes
-xlabel('Number of nodes');
-ylabel('Indices of eigenvalues');
-zlabel('log10(Relative error of eigenmodes)');
-title('3D Scatter Plot of relative error of eigenmodes vs. the number of nodes');
-grid on;
-
-
-subplot(1,2,2)
-for jj=1:length(sp)
-    ii=1;%plot the results when the first #of nodes is used
-    scatter3(sp(jj)*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenmodes_relative(ii,jj,:))), 'filled', color(jj));
-    hold on;
-    % Use plot3 to connect the points with lines
-    plot3(sp(jj)*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenmodes_relative(ii,jj,:))), '-o', 'LineWidth', 1.5);
-    hold on;
-end;
-hold off;
-% Labeling the axes
-xlabel('Values of the RBF shape parameter');
-ylabel('Indices of eigenvalues');
-zlabel('log10(Relative error of eigenmodes)');
-title('3D Scatter Plot of relative error of eigenmodes vs. the shape parameter');
-grid on;
-
-
-
-
-
-
-% IV.----------------------------------------------------
-%plot the rms error of eigenmodes w.r.t. sp and nodes
-figure
-subplot(1,2,1) %the first plot in this figure
-for ii=1:length(nodes)
-    jj=1;%plot the results when the first sp is used
-    scatter3((nodes(ii)+1)^2*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenmodes_rms(ii,jj,:))), 'filled', color(ii));
-    hold on;
-    % Use plot3 to connect the points with lines
-    plot3((nodes(ii)+1)^2*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenmodes_rms(ii,jj,:))), '-o', 'LineWidth', 1.5);
-    hold on;
-end;
-hold off;
-% Labeling the axes
-xlabel('Number of nodes');
-ylabel('Indices of eigenvalues');
-zlabel('log10(RMS error of eigenmodes)');
-title('3D Scatter Plot of rms error of eigenmodes vs. the number of nodes');
-grid on;
-
-
-subplot(1,2,2)
-for jj=1:length(sp)
-    ii=1;%plot the results when the first #of nodes is used
-    scatter3(sp(jj)*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenmodes_rms(ii,jj,:))), 'filled', color(jj));
-    hold on;
-    % Use plot3 to connect the points with lines
-    plot3(sp(jj)*ones(1,length(m)), 1:length(m), log10(squeeze(Err_eigenmodes_rms(ii,jj,:))), '-o', 'LineWidth', 1.5);
-    hold on;
-end;
-hold off;
-% Labeling the axes
-xlabel('Values of the RBF shape parameter');
-ylabel('Indices of eigenvalues');
-zlabel('log10(RMS error of eigenmodes)');
-title('3D Scatter Plot of rms error of eigenmodes vs. the shape parameter');
-grid on;
-
-
-
-
-
