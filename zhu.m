@@ -106,9 +106,10 @@ for nn=nodes
     bdpt=coor(int_ind_b,1:2);% boundary points
     n=length(coor(:,1));ni=length(intnode(:,1));nb=n-ni;% # of interior, boundary, and total points
 
+    
     % Interior and Boundary Points Figuring Out Complete
     % ***************************************************
-    
+
     
     %per shape parameter
     for c=sp
@@ -133,6 +134,7 @@ for nn=nodes
 
         %Calculating the RBF (Only for interior points)
         MQ = sqrt(cc^2*DM(int_ind,:).^2 + 1);
+
         %Calculating the RBF \phi. (For all points)
         mq = sqrt(cc^2*DM.^2+1);
 
@@ -151,9 +153,7 @@ for nn=nodes
        
 
         A = L_MQ/mq; %Calculating the local weights \alpha
-
-        display(size(A));
-
+      
         %extract entries corresponding to interior nodes
         A = A(:,int_ind);
 

@@ -3,6 +3,7 @@ classdef Square
         SPoints        % (2 x N) Interior (collocation) points in the square
         BoundaryPoints % (2 x M) Points on the boundary of the square
         GhostPoints    % (2 x K) "Ghost" points outside the square
+        Grid           % Structure containing grid information for surface plotting
     end
 
     properties(SetAccess = private)
@@ -20,56 +21,39 @@ classdef Square
         end
         
         % Generate interior (collocation) points in the square
-        function obj = generateSquare(obj, numPoints)
-    % numPoints: desired number of interior points in each direction
-    xmin = obj.Domain(1); xmax = obj.Domain(2);
-    ymin = obj.Domain(3); ymax = obj.Domain(4);
-    
-    % Generate a grid with numPoints+2 points in each direction,
-    % then remove the boundary points.
-    x_domain = linspace(xmin, xmax, numPoints+2);
-    y_domain = linspace(ymin, ymax, numPoints+2);
-    
-    % Remove the first and last entries so that only interior points remain
-    x_domain = x_domain(2:end-1);
-    y_domain = y_domain(2:end-1);
-    
-    [X, Y] = meshgrid(x_domain, y_domain);
-    
-    % Store as a 2 x N array (each column is a point)
-    obj.SPoints = [X(:)'; Y(:)'];
-end
-        
-        % Generate boundary points along the four edges of the square
-        function obj = generateBoundaryPoints(obj, numPoints)
-            % numPoints: number of points per edge
+                % Generate interior (collocation) points in the square
+                function obj = generateGrid(obj, N)
+            % N: number of intervals in each coordinate direction,
+            % so there will be N+1 grid points per direction.
             xmin = obj.Domain(1); xmax = obj.Domain(2);
             ymin = obj.Domain(3); ymax = obj.Domain(4);
             
-            % Top edge (y = ymax)
-            x_top = linspace(xmin, xmax, numPoints);
-            y_top = ymax * ones(1, numPoints);
+            % Create a grid with N+1 points along each axis.
+            x_vals = linspace(xmin, xmax, N+1);
+            y_vals = linspace(ymin, ymax, N+1);
+            [X, Y] = meshgrid(x_vals, y_vals);
             
-            % Bottom edge (y = ymin)
-            x_bottom = linspace(xmin, xmax, numPoints);
-            y_bottom = ymin * ones(1, numPoints);
+            % Save the full grid for plotting
+            obj.Grid.Full.X = X;
+            obj.Grid.Full.Y = Y;
             
-            % Left edge (x = xmin)
-            y_left = linspace(ymin, ymax, numPoints);
-            x_left = xmin * ones(1, numPoints);
+            % Combine the grid points into a 2 x ((N+1)^2) array.
+            % Each column is a point [x; y].
+            allPoints = [X(:)'; Y(:)'];
             
-            % Right edge (x = xmax)
-            y_right = linspace(ymin, ymax, numPoints);
-            x_right = xmax * ones(1, numPoints);
+            % Identify the boundary points.
+            % A point is on the boundary if its x value equals xmin or xmax,
+            % or its y value equals ymin or ymax (allowing for numerical tolerance).
+            tol = 1e-12;
+            isBoundary = (abs(allPoints(1,:) - xmin) < tol) | (abs(allPoints(1,:) - xmax) < tol) | ...
+                         (abs(allPoints(2,:) - ymin) < tol) | (abs(allPoints(2,:) - ymax) < tol);
             
-            % Combine all boundary points
-            allPoints = [x_top, x_bottom, x_left, x_right;
-                         y_top, y_bottom, y_left, y_right];
-            
-            % Remove duplicate points (corners appear twice)
-            unique_points = unique(allPoints', 'rows', 'stable')';
-            obj.BoundaryPoints = unique_points;
+            % Separate the points.
+            obj.BoundaryPoints = allPoints(:, isBoundary)';
+            obj.SPoints = allPoints(:, ~isBoundary)';
         end
+
+        
         
         % Generate ghost points outside the square domain
         function obj = generateGhostPoints(obj, numPoints, width, spread)
@@ -115,15 +99,15 @@ end
         function scatterPlot(obj, plot_title, showBoundary, showGhost)
             figure;
             % Plot interior (collocation) points in blue
-            scatter(obj.SPoints(1,:), obj.SPoints(2,:), 10, 'filled', 'b');
+            scatter(obj.SPoints(:,1), obj.SPoints(:,2), 10, 'filled', 'b');
             hold on;
             % Plot boundary points in red (if requested)
             if nargin > 2 && showBoundary && ~isempty(obj.BoundaryPoints)
-                scatter(obj.BoundaryPoints(1,:), obj.BoundaryPoints(2,:), 15, 'filled', 'r');
+                scatter(obj.BoundaryPoints(:,1), obj.BoundaryPoints(:,2), 15, 'filled', 'r');
             end
             % Plot ghost points in green (if requested)
             if nargin > 3 && showGhost && ~isempty(obj.GhostPoints)
-                scatter(obj.GhostPoints(1,:), obj.GhostPoints(2,:), 15, 'filled', 'g');
+                scatter(obj.GhostPoints(:,1), obj.GhostPoints(:,2), 15, 'filled', 'g');
             end
             hold off;
             axis equal;
