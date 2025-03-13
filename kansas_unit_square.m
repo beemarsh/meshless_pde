@@ -1,4 +1,4 @@
-addpath('../domain/')
+addpath('./domain/')
 clear all;
 clear;
 
@@ -21,8 +21,8 @@ num_boundary_points = length(boundary_points(:,1));
 num_total_points = num_collocation_points + num_boundary_points;
 
 
-X = square_domain.Grid.Full.X;
-Y = square_domain.Grid.Full.Y;
+X = square_domain.Grid.X;
+Y = square_domain.Grid.Y;
 
 %This function D calculates the distance between each points in the matrix x and y.
 %Here, x is a n*2 matrix and y is a m*2 matrix.
@@ -53,7 +53,9 @@ rms_err_eigenmode = zeros(length(shapes), length(m));
 % Keeps count when looping
 count = 0;
 % For each different shape parameter, we approximate values.
-for shape = shapes
+
+shape = shapes(1);
+%for shape = shapes
 
     count = count+1;
 
@@ -167,7 +169,7 @@ figure
     title("Absolute Errors for Shape Parameter : " + shape);
    end
 
-end
+%end
 
 
 % We have saved eigenvalues and their errors. We can always plot them here.
