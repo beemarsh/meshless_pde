@@ -100,45 +100,34 @@ classdef Square
 
 
         % Generate ghost points outside the square domain
-        function obj = generateGhostPoints(obj, width, spread)
-            % Extract domain boundaries
-            xmin = obj.Domain(1);
-            xmax = obj.Domain(2);
-            ymin = obj.Domain(3);
-            ymax = obj.Domain(4);
+        function obj = generateGhostPoints(obj, alpha, cx, cy, R)
 
-            % Generate original grid points (from generateGrid)
-            N = obj.Size;
-            x_vals = linspace(xmin, xmax, N+1);
-            y_vals = linspace(ymin, ymax, N+1);
+            if nargin < 3, cx = 0; end
+            if nargin < 4, cy = 0; end
+            if nargin < 5, R = 1; end
 
-            % Generate ghost layers for x-direction
-            left_x = xmin - spread * (1:width);
-            right_x = xmax + spread * (1:width);
-            x_extended = [left_x, x_vals, right_x];
+            % Generate original grid points
+            n = obj.Size * obj.Size; % Number of intervals in the grid
 
-            % Generate ghost layers for y-direction
-            bottom_y = ymin - spread * (1:width);
-            top_y = ymax + spread * (1:width);
-            y_extended = [bottom_y, y_vals, top_y];
+            b = round(alpha*sqrt(n));
+            phi = (sqrt(5)+1)/2;
+            x=zeros(n,1); y=x;
+            for k=1:n
+                r = radius(k,n,b) * R;  % Scale by R
+                theta = 2*pi*k/phi^2;
+                x(k)=cx + r*sin(theta); % Offset by cx
+                y(k)=cy + r*cos(theta); % Offset by cy
+            end
 
-            % Create meshgrid for the extended domain
-            [X, Y] = meshgrid(x_extended, y_extended);
+            % Create a grid of size N.
+            % [X, Y] = meshgrid(X_scaled, X_scaled);
 
-            % Save the ghost grid for plotting
-            obj.GhostGrid.X = X;
-            obj.GhostGrid.Y = Y;
+            % obj.Grid.GhostX = X;
+            % obj.Grid.GhostY = Y;
 
-            % Combine all extended points into a 2xK array
-            allGhostPoints = [X(:)'; Y(:)'];
+            obj.GhostPoints = [x, y]; % Store the ghost points
 
-            % Identify points outside the original domain (with tolerance)
-            tol = 1e-12;
-            isGhost = (allGhostPoints(1,:) < xmin - tol) | (allGhostPoints(1,:) > xmax + tol) | ...
-                (allGhostPoints(2,:) < ymin - tol) | (allGhostPoints(2,:) > ymax + tol);
-
-            % Assign ghost points
-            obj.GhostPoints = allGhostPoints(:, isGhost)';
+            % Return the modified object
         end
 
         % Scatter plot of interior, boundary, and ghost points
@@ -169,5 +158,13 @@ classdef Square
             end
             legend(legendEntries, 'Location', 'best');
         end
+    end
+end
+
+function r = radius(k,n,b)
+    if k>n-b
+        r = 1;
+    else
+        r = sqrt(k-1/2)/sqrt(n-(b+1)/2);
     end
 end
