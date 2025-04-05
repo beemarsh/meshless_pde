@@ -2,12 +2,12 @@
 addpath('./domain/');
 addpath('./functions/');
 
-%First define the domain
-% Unit square domain
-square_domain = Square([0, 1]);
 
 % We use different shape parameters
 shapes = [9 10 11];
+
+% We use different number of nodes
+nodes=[20 30 50];
 
 m=[1 2 1 2 3 1 3 2 4 ];
 l=[1 1 2 2 1 3 2 3 1 ];
@@ -21,126 +21,156 @@ l=[1 1 2 2 1 3 2 3 1 ];
 D = @(x,y) hypot(bsxfun(@minus,x(:,1),y(:,1)'),bsxfun(@minus,x(:,2),y(:,2)'));
 
 % Store the result for eigenvalues in 3 columns:
-% First: approximate eigenvalues
-% Second: exact eigenvalues
-% Third:  error in eigenvalues
-result_eigenvalues = zeros([length(m), 3]);
+% Each layer stores the approximate eigenvalues for each size of the node.
+% Each column stores the approximate eigenvalues for each shape parameter.
+% The first layer stores the ith node. Each column stores for each shape parameter.
+result_eigenvalues = zeros(length(m), length(shapes), length(nodes));
+
+% Store the error in eigenvalues.
+error_eigenvalues = zeros(length(m), length(shapes), length(nodes));
 
 % Store results for eigenmode.
-max_err_eigenmodes = zeros(length(shapes), length(m)); % Store maximum error
-relative_err_eigenmodes = zeros(length(shapes), length(m)); % Store relative error
-rms_err_eigenmode = zeros(length(shapes), length(m)); % Store RMS error
+max_err_eigenmodes = zeros(length(m), length(shapes), length(nodes)); % Store maximum error
 
-% Generate a grid of size N^2
-square_domain = square_domain.generateGrid(20);
-square_domain.scatterPlot("Square Domain", true, false);
+relative_err_eigenmodes = zeros(length(m), length(shapes), length(nodes)); % Store relative error
 
-% Store the coordinates.
-coordinates = square_domain.Coordinates; % Here coordinates have two columns, X and Y values.
-% Now add a third column for storing the eigenmodes associated with the point.
-coordinates = [coordinates, zeros(length(coordinates),1)];
-
-% Store the interior points and their indices
-interior_pts = square_domain.InteriorPoints;
-interior_idx = square_domain.InteriorIndices;
-
-% Store the boundary points and their indices
-boundary_pts = square_domain.BoundaryPoints;
-boundary_idx = square_domain.BoundaryIndices;
+rms_err_eigenmode = zeros(length(m), length(shapes), length(nodes)); % Store RMS error
 
 
-% Calculate the size of the set of points
-num_interior_pts = length(interior_pts(:,1));
-num_boundary_pts = length(boundary_pts(:,1));
+%count the time of the main part of the code
+t0=clock;
 
-num_total_pts = num_interior_pts + num_boundary_pts;
+%Keep track of nodes
+i=0;
 
+for nn=nodes
 
-X = square_domain.Grid.X;
-Y = square_domain.Grid.Y;
+        i=i+1;
+        j=0;
+        %First define the domain
+        % Unit square domain
+        square_domain = Square([0, 1]);
+        % Generate a grid of size N^2
+        square_domain = square_domain.generateGrid(nn);
 
+        % square_domain.scatterPlot("Square Domain", true, true);
 
-% Keeps count when looping
-count = 0;
-% For each different shape parameter, we approximate values.
+        % Store the coordinates.
+        % Here coordinates have two columns, X and Y values.
+        % Now add a third column for storing the eigenmodes associated with the point. It is filled with 1s.
+        coordinates = [square_domain.Coordinates, zeros(length(square_domain.Coordinates),1)];
 
-%shape = shapes(1);
-for shape = shapes
+        % Store the interior points and their indices
+        interior_pts = square_domain.InteriorPoints;
+        interior_idx = square_domain.InteriorIndices;
 
-count = count+1;
-
-% We find the distance matrix
-DM = D(coordinates(:,1:2), coordinates(:,1:2));
-
-% Calculate RBF MQ = sqrt (1 + ξ^2 * r^2 )
-% Only for collocation points
-MQ =  (1/(9 * (shape ^ 2))) .* ( ( (4 + (shape * DM(interior_idx,:)).^2  ) .* (sqrt(1 + (shape * DM(interior_idx,:)).^2 ))) - 3 * log(sqrt(1 + (shape * DM(interior_idx,:)).^2 ) + 1));
-
-
-% Now, RBF for all points
-mq =  (1/(9 * (shape ^ 2))) * ( ( (4 + (shape * DM).^2  ) * (sqrt(1 + (shape * DM).^2 ))) - 3 * log(sqrt(1 + (shape * DM).^2 ) + 1));
-
-
-% Now we take the laplacian of MQ RBF.
-L_MQ = sqrt( ( shape^2 * DM(interior_idx,:).^2 ) + 1 );
-
-% We have a linear system: -A α = λ B α
-% We recast this form into standard eigenvalue problem.
-% Let V = A inv(B)
-% Thus, we get the system: -V α = λ α
-V = L_MQ / mq;
-
-% To calculate eigenvalues, first we make the matrix V square.
-% For that, we extract the entries corresponding to interior
-% collocation points
-V = V(:, interior_idx);
+        % Store the boundary points and their indices
+        boundary_pts = square_domain.BoundaryPoints;
+        boundary_idx = square_domain.BoundaryIndices;
 
 
 
-% Now, we calculate the eigenvalues.
-% Note that we are using negative because our equation has it.
-[alpha, lambda] = eigs(-V, length(m), 0);
+        % Calculate the size of the set of points
+        num_interior_pts = length(interior_pts(:,1));
+        num_boundary_pts = length(boundary_pts(:,1));
 
-% extract the first length(m) eigenvalues;
-% We need to extract them from the diagonal.
+        num_total_pts = num_interior_pts + num_boundary_pts;
 
-approximate_eigenvalues = real(diag(lambda));
 
-alpha = real(alpha);
+        X = square_domain.Grid.X;
+        Y = square_domain.Grid.Y;
 
-% Compute the exact eigenvalues and then calculate the relative error
-exact_eigenvalues = pi^2*(m.^2.+l.^2)';
-relative_error = (abs(approximate_eigenvalues' - pi^2*(m.^2.+l.^2))./(pi^2*(m.^2.+l.^2)))';
+        for shape = shapes
 
-% Store approximate eigenvalues, exact eigenvalues and relative error
-% in eigenvalues.
-result_eigenvalues(:,1:3)=[approximate_eigenvalues, exact_eigenvalues, relative_error];
+                j=j+1;
 
-% Compute the exact eigenmodes
-exact_eigenmode = sin(pi*coordinates(:,1)*m).*sin(pi*coordinates(:,2)*l);
-normf = sqrt(sum(exact_eigenmode.^2));
+                % We find the distance matrix
+                DM = D(coordinates(:,1:2), coordinates(:,1:2));
 
-% After computing eigenmodes, we will calculate errors: relative, max,
-% and RMS.
-for k=1:length(m)
-        firsteigmode = exact_eigenmode(interior_idx,k);
-        error_eigenmode_k = abs(abs(firsteigmode)-normf(k)*abs(alpha(1:num_interior_pts,k)));
+                % Calculate RBF MQ = sqrt (1 + ξ^2 * r^2 )
+                % Only for collocation points
 
-        max_err_eigenmodes(count, k) = max(error_eigenmode_k);
+                MQ =  (1/(9 * (shape ^ 2))) .* ( ( (4 + (shape * DM(interior_idx,:)).^2  ) .* (sqrt(1 + (shape * DM(interior_idx,:)).^2 ))) - 3 * log(sqrt(1 + (shape * DM(interior_idx,:)).^2 ) + 1));
 
-        relative_err_eigenmodes(count, k) = max(error_eigenmode_k/max(firsteigmode));
+                % Now, RBF for all points
+                mq =  (1/(9 * (shape ^ 2))) * ( ( (4 + (shape * DM).^2  ) * (sqrt(1 + (shape * DM).^2 ))) - 3 * log(sqrt(1 + (shape * DM).^2 ) + 1));
 
-        rms_err_eigenmode(count, k) = sqrt(sum(error_eigenmode_k.^2)/num_interior_pts);
+                % Now we take the laplacian of MQ RBF.
+                L_MQ = sqrt( ( shape^2 * DM(interior_idx,:).^2 ) + 1 );
+
+                % We have a linear system: -A α = λ B α
+                % We recast this form into standard eigenvalue problem.
+                % Let V = A inv(B)
+                % Thus, we get the system: -V α = λ α
+                V = L_MQ / mq;
+
+                % To calculate eigenvalues, first we make the matrix V square.
+                % For that, we extract the entries corresponding to interior
+                % collocation points
+                V = V(:, interior_idx);
+
+
+
+                % Now, we calculate the eigenvalues.
+                % Note that we are using negative because our equation has it.
+                [alpha, lambda] = eigs(-V, length(m), 0);
+
+                % extract the first length(m) eigenvalues;
+                % We need to extract them from the diagonal.
+
+                approximate_eigenvalues = real(diag(lambda));
+
+                alpha = real(alpha);
+
+                % Compute the exact eigenvalues and then calculate the relative error
+                exact_eigenvalues = pi^2*(m.^2.+l.^2)';
+                relative_error = (abs(approximate_eigenvalues' - pi^2*(m.^2.+l.^2))./(pi^2*(m.^2.+l.^2)))';
+
+                % Store approximate eigenvalues, exact eigenvalues and relative error in eigenvalues.
+                % The first layer stores the ith node. Each column stores for each shape parameter.
+                result_eigenvalues(:,j,i) = approximate_eigenvalues;
+
+                % Same way store the errors
+                error_eigenvalues(:,j,i) = relative_error;
+
+                % Compute the exact eigenmodes
+                exact_eigenmode = sin(pi*coordinates(:,1)*m).*sin(pi*coordinates(:,2)*l);
+                normf = sqrt(sum(exact_eigenmode.^2));
+
+                % After computing eigenmodes, we will calculate errors: relative, max,
+                % and RMS.
+                for k=1:length(m)
+                        firsteigmode = exact_eigenmode(interior_idx,k);
+                        error_eigenmode_k = abs(abs(firsteigmode)-normf(k)*abs(alpha(1:num_interior_pts,k)));
+
+                        max_err_eigenmodes(k, j, i) = max(error_eigenmode_k); % Just like the eigenvalues, we store the maximum error in a 3D matrix.
+
+                        relative_err_eigenmodes(k, j, i) = max(error_eigenmode_k/max(firsteigmode));
+
+                        rms_err_eigenmode(k,j,i) = sqrt(sum(error_eigenmode_k.^2)/num_interior_pts);
+                end
+
+
+                % Plot the exact eigenmodes
+                plot_exact_eigenmodes(9, exact_eigenmode, X, Y, shape);
+
+                % Plot the numerical eigenmodes
+                plot_numeric_eigenmodes(9, coordinates, X, Y, interior_idx, num_interior_pts, normf, alpha, shape);
+
+                % Plot the absolute errors of the eigenmodes
+                plot_abs_error(9, coordinates, X, Y, interior_idx, num_interior_pts, normf, alpha, exact_eigenmode, shape);
+
+        end
 end
 
+% Plot the errors of eigenvalues
+plot_eigenvalue_errors(nodes,shapes,error_eigenvalues,l,m);
 
-% Plot the exact eigenmodes
-plot_exact_eigenmodes(9, exact_eigenmode, X, Y, shape);
+% Plot the absolute error of eigenmodes
+plot_eigenmode_abs_error(nodes,shapes,max_err_eigenmodes,l,m);
 
-% Plot the numerical eigenmodes
-plot_numeric_eigenmodes(9, coordinates, X, Y, interior_idx, num_interior_pts, normf, alpha, shape);
+% Plot the relative error of eigenmodes
+plot_eigenmode_rel_error(nodes,shapes,relative_err_eigenmodes,l,m);
 
-% Plot the absolute errors of the eigenmodes
-plot_abs_error(9, coordinates, X, Y, interior_idx, num_interior_pts, normf, alpha, exact_eigenmode, shape);
-
-end
+% Plot the RMS error of eigenmodes
+plot_eigenmode_rms_error(nodes,shapes,rms_err_eigenmode,l,m);

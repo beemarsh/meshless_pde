@@ -4,27 +4,25 @@ addpath('./functions/');
 
 
 % We use different shape parameters
-shapes = [3.66 4.45 5.71];
+shapes = linspace(0.3, 4, 500);
 
 % We use different number of nodes
-nodes=[20 30 50];
+nodes=[19];
+
+% d = 0.7071;
 
 m=[1 2 1 2 3 1 3 2 4 ];
 l=[1 1 2 2 1 3 2 3 1 ];
 
-% This function D calculates the distance between each points in the matrix x and y.
-% Here, x is a n*2 matrix and y is a m*2 matrix.
-% Each row denotes a set of x,y collocation points
-% Using bsxfun, we calculate the difference between each points.
-% Using hypot, we calculate the Euclidean distance.
-% Essentially, all its doing is: sqrt( (x_1 - x_2)^2 + (y_1 - y_2)^2 )
-D = @(x,y) hypot(bsxfun(@minus,x(:,1),y(:,1)'),bsxfun(@minus,x(:,2),y(:,2)'));
+% Radius of the spiral ghost points.
+R=1;
 
 % Store the result for eigenvalues in 3 columns:
 % Each layer stores the approximate eigenvalues for each size of the node.
 % Each column stores the approximate eigenvalues for each shape parameter.
 % The first layer stores the ith node. Each column stores for each shape parameter.
 result_eigenvalues = zeros(length(m), length(shapes), length(nodes));
+
 
 % Store the error in eigenvalues.
 error_eigenvalues = zeros(length(m), length(shapes), length(nodes));
@@ -50,7 +48,7 @@ for nn=nodes
         square_domain = Square([0, 1]);
         % Generate a grid of size N^2
         square_domain = square_domain.generateGrid(nn);
-        square_domain = square_domain.generateGhostPoints(1, 0.5,0.5, 2);
+        square_domain = square_domain.generateGhostPoints(1, 0.5,0.5, R);
 
         % square_domain.scatterPlot("Square Domain", true, true);
 
@@ -77,10 +75,10 @@ for nn=nodes
 
         num_total_pts = num_interior_pts + num_boundary_pts;
 
-
         X = square_domain.Grid.X;
         Y = square_domain.Grid.Y;
 
+        [soo,dee] = smallest_circle(boundary_pts);
 
         for shape = shapes
                 j=j+1; % Keep track of the index of the shape parameter
@@ -124,14 +122,14 @@ for nn=nodes
 
                 % Compute the exact eigenvalues and then calculate the relative error
                 exact_eigenvalues = pi^2*(m.^2.+l.^2)';
-                relative_error = (abs(approximate_eigenvalues' - pi^2*(m.^2.+l.^2))./(pi^2*(m.^2.+l.^2)))';
+                err = (abs(approximate_eigenvalues' - pi^2*(m.^2.+l.^2)))';
 
                 % Store approximate eigenvalues, exact eigenvalues and relative error in eigenvalues.
                 % The first layer stores the ith node. Each column stores for each shape parameter.
                 result_eigenvalues(:,j,i) = approximate_eigenvalues;
 
                 % Same way store the errors
-                error_eigenvalues(:,j,i) = relative_error;
+                error_eigenvalues(:,j,i) = err;
 
                 % Compute the exact eigenmodes
                 exact_eigenmode = sin(pi*coordinates(:,1)*m).*sin(pi*coordinates(:,2)*l);
@@ -168,13 +166,40 @@ cpu=etime(clock,t0); % count the time of the main part of the code
 fprintf('Run time : %6.2f\n',cpu);
 
 % Plot the errors of eigenvalues
-plot_eigenvalue_errors(nodes,shapes,error_eigenvalues,l,m);
+% plot_eigenvalue_errors(nodes,shapes,error_eigenvalues,l,m);
+
+eigenvalue_Max_errors = zeros(1, length(shapes));
+for i=1:length(shapes)
+    eigenvalue_Max_errors(i) = max(error_eigenvalues(:,i));
+end
+
+[min_error, min_idx] = min(eigenvalue_Max_errors);
+best_shape = shapes(min_idx);
+
+figure;
+plot(shapes, eigenvalue_Max_errors, 'o-');
+hold on;
+
+% Highlight the minimum error point with a distinct marker
+plot(best_shape, min_error, 'ro', 'MarkerSize', 10, 'LineWidth', 2); % Red circle
+
+% Add a text label with an arrow
+text(best_shape, min_error, ...
+    sprintf('\\leftarrow Minimum Error: %.2e\n(Shape = %.2f)', min_error, best_shape), ...
+    'VerticalAlignment', 'middle', ...
+    'HorizontalAlignment', 'right', ...
+    'FontSize', 10);
+xlabel('Shape Parameter');
+ylabel('Max Error');
+title('Max Error of USING GHOST POINTS(FIXED SHAPE PARAMETER)');
 
 % Plot the absolute error of eigenmodes
-plot_eigenmode_abs_error(nodes,shapes,max_err_eigenmodes,l,m);
+% plot_eigenmode_abs_error(nodes,shapes,max_err_eigenmodes,l,m);
 
 % Plot the relative error of eigenmodes
-plot_eigenmode_rel_error(nodes,shapes,relative_err_eigenmodes,l,m);
+% plot_eigenmode_rel_error(nodes,shapes,relative_err_eigenmodes,l,m);
 
 % Plot the RMS error of eigenmodes
-plot_eigenmode_rms_error(nodes,shapes,rms_err_eigenmode,l,m);
+% plot_eigenmode_rms_error(nodes,shapes,rms_err_eigenmode,l,m);
+
+% save_matrix(log10(error_eigenvalues), nodes, shapes, 'error_eigenvalues_kansa_ghost');
