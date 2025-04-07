@@ -1,15 +1,19 @@
-function [ m_distance ] = distance_matrix( measurement_points, basis_points )
-%DISTANCE_MATRIX Summary of this function goes here
-%   measurement_points : [M, dimension]
-%   basis_points       : [N, dimension]
-%   M: number of measurement points
-%   N: number of basis points
+% This function D calculates the distance between each points in the matrix x and y.
+% Here, x is a n*2 matrix and y is a m*2 matrix.
+% Each row denotes a set of x,y collocation points
+% Using bsxfun, we calculate the difference between each points.
+% Using hypot, we calculate the Euclidean distance.
+% Essentially, all its doing is: sqrt( (x_1 - x_2)^2 + (y_1 - y_2)^2 )
 
-import matrix.*;
+function D = distance_matrix(x, y)
+% Calculates the Euclidean distance between points in matrices x and y
+%
+% Inputs:
+%   x: n×2 matrix where each row is a point [x,y]
+%   y: m×2 matrix where each row is a point [x,y]
+%
+% Output:
+%   D: n×m matrix of Euclidean distances between points in x and y
 
-m_distance = norm_square_matrix( measurement_points, basis_points );
-
-m_distance = sqrt(m_distance);
-
+D = hypot(bsxfun(@minus,x(:,1),y(:,1)'), bsxfun(@minus,x(:,2),y(:,2)'));
 end
-

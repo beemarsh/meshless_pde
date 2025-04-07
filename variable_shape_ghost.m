@@ -12,7 +12,7 @@ addpath('./plot/')
 % shapes= linspace(0.001, 10, 10000);
 % We use different number of nodes
 % nodes=[20];
-radii = linspace(0.5, 20, 10000);
+radii = [0.76];
 
 m=[1 2 1 2 3 1 3 2 4 ];
 l=[1 1 2 2 1 3 2 3 1 ];
@@ -35,11 +35,11 @@ result_eigenvalues = zeros(length(m), length(radii));
 error_eigenvalues = zeros(length(m), length(radii));
 
 % Store results for eigenmode.
-% max_err_eigenmodes = zeros(length(m), length(shapes), length(nodes)); % Store maximum error
+max_err_eigenmodes = zeros(length(m), length(radii)); % Store maximum error
 
-% relative_err_eigenmodes = zeros(length(m), length(shapes), length(nodes)); % Store relative error
+relative_err_eigenmodes = zeros(length(m), length(radii)); % Store relative error
 
-% rms_err_eigenmode = zeros(length(m), length(shapes), length(nodes)); % Store RMS error
+rms_err_eigenmode = zeros(length(m), length(radii)); % Store RMS error
 
 %count the time of the main part of the code
 t0=clock;
@@ -89,10 +89,9 @@ for R=radii
     % Shape parameter (the same length as basis)
     shape_franke = franke(num_total_pts, 2*R);
 
-    [shapes, shape_min, shape_max] = variable_shape(num_total_pts, shape_franke, 0.5, 0.5);
+    [shapes, shape_min, shape_max] = variable_shape(num_total_pts, shape_franke, 1.5, 2);
 
     % Find the interval of the shape parameter
-
 
     % figure;
     % plot(ghost_pts(:,1), ghost_pts(:,2), 'o');
@@ -156,21 +155,21 @@ for R=radii
     error_eigenvalues(:,i) = relative_error;
 
     % Compute the exact eigenmodes
-    % exact_eigenmode = sin(pi*coordinates(:,1)*m).*sin(pi*coordinates(:,2)*l);
-    % normf = sqrt(sum(exact_eigenmode.^2));
+    exact_eigenmode = sin(pi*coordinates(:,1)*m).*sin(pi*coordinates(:,2)*l);
+    normf = sqrt(sum(exact_eigenmode.^2));
 
     % % After computing eigenmodes, we will calculate errors: relative, max,
     % % and RMS.
-    % for k=1:length(m)
-    %         firsteigmode = exact_eigenmode(interior_idx,k);
-    %         error_eigenmode_k = abs(abs(firsteigmode)-normf(k)*abs(alpha(1:num_interior_pts,k)));
+    for k=1:length(m)
+            firsteigmode = exact_eigenmode(interior_idx,k);
+            error_eigenmode_k = abs(abs(firsteigmode)-normf(k)*abs(alpha(1:num_interior_pts,k)));
 
-    %         max_err_eigenmodes(k, j, i) = max(error_eigenmode_k); % Just like the eigenvalues, we store the maximum error in a 3D matrix.
+            max_err_eigenmodes(k, i) = max(error_eigenmode_k); % Just like the eigenvalues, we store the maximum error in a 3D matrix.
 
-    %         relative_err_eigenmodes(k, j, i) = max(error_eigenmode_k/max(firsteigmode));
+            relative_err_eigenmodes(k, i) = max(error_eigenmode_k/max(firsteigmode));
 
-    %         rms_err_eigenmode(k,j,i) = sqrt(sum(error_eigenmode_k.^2)/num_interior_pts);
-    % end
+            rms_err_eigenmode(k,i) = sqrt(sum(error_eigenmode_k.^2)/num_interior_pts);
+    end
 
 
     % Plot the exact eigenmodes
@@ -192,36 +191,36 @@ fprintf('Run time : %6.2f\n',cpu);
 % plot_eigenvalue_errors(nodes,shapes,error_eigenvalues,l,m);
 
 
-eigenvalue_Max_errors = zeros(1, length(radii));
-for i=1:length(radii)
-    eigenvalue_Max_errors(i) = max(error_eigenvalues(:,i));
-end
+% eigenmode_Max_errors = zeros(1, length(radii));
+% for i=1:length(radii)
+%     eigenmode_Max_errors(i) = max(max_err_eigenmodes(:,i));
+% end
 
-[min_error, min_idx] = min(eigenvalue_Max_errors);
-best_shape = radii(min_idx);
+% [min_error, min_idx] = min(eigenmode_Max_errors);
+% best_shape = radii(min_idx);
 
-figure;
-plot(radii, eigenvalue_Max_errors, 'o-');
-hold on;
+% figure;
+% plot(radii, eigenmode_Max_errors, 'o-');
+% hold on;
 
-% Highlight the minimum error point with a distinct marker
-plot(best_shape, min_error, 'ro', 'MarkerSize', 10, 'LineWidth', 2); % Red circle
+% % Highlight the minimum error point with a distinct marker
+% plot(best_shape, min_error, 'ro', 'MarkerSize', 10, 'LineWidth', 2); % Red circle
 
-% Add a text label with an arrow
-text(best_shape, min_error, ...
-    sprintf('\\leftarrow Minimum Error: %.2e\n(RADIUS = %.2f)', min_error, best_shape), ...
-    'VerticalAlignment', 'middle', ...
-    'HorizontalAlignment', 'right', ...
-    'FontSize', 10);
-xlabel('RADIUS');
-ylabel('Max Error');
-title('Max Error of USING GHOST POINTS(VARIABLE SHAPE PARAMETER)');
+% % Add a text label with an arrow
+% text(best_shape, min_error, ...
+%     sprintf('\\leftarrow Minimum Error: %.2e\n(RADIUS = %.2f)', min_error, best_shape), ...
+%     'VerticalAlignment', 'middle', ...
+%     'HorizontalAlignment', 'right', ...
+%     'FontSize', 10);
+% xlabel('RADIUS');
+% ylabel('Max Error');
+% title('Max Error Eigenmodes)');
 
 % Plot the absolute error of eigenmodes
-% plot_eigenmode_abs_error(nodes,shapes,max_err_eigenmodes,l,m);
+plot_eigenmode_abs_error(nn,radii,max_err_eigenmodes,l,m);
 
 % Plot the relative error of eigenmodes
-% plot_eigenmode_rel_error(nodes,shapes,relative_err_eigenmodes,l,m);
+plot_eigenmode_rel_error(nodes,shapes,relative_err_eigenmodes,l,m);
 
 % Plot the RMS error of eigenmodes
 % plot_eigenmode_rms_error(nodes,shapes,rms_err_eigenmode,l,m);

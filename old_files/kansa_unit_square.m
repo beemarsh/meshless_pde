@@ -5,10 +5,10 @@ addpath('./plot/')
 
 % We use different shape parameters
 % shapes = [ 11 10 9 8];
-% shapes = linspace(0.1 , 50, 1000);
-shapes= [9];
+shapes = [2.24]
+% shapes= [9];
 % We use different number of nodes
-nodes=[19];
+nodes=[20];
 
 m=[1 2 1 2 3 1 3 2 4 ];
 l=[1 1 2 2 1 3 2 3 1 ];
@@ -168,35 +168,35 @@ fprintf('Run time : %6.2f\n',cpu);
 % plot_eigenvalue_errors(nodes,shapes,error_eigenvalues,l,m);
 
 
-% eigenvalue_Max_errors = zeros(1, length(shapes));
-% for i=1:length(shapes)
-%     eigenvalue_Max_errors(i) = max(error_eigenvalues(:,i,1));
-% end
+eigenvalue_Max_errors = zeros(1, length(shapes));
+for i=1:length(shapes)
+    eigenvalue_Max_errors(i) = max(error_eigenvalues(:,i,1));
+end
 
-% [min_error, min_idx] = min(eigenvalue_Max_errors);
-% best_shape = shapes(min_idx);
+[min_error, min_idx] = min(eigenvalue_Max_errors);
+best_shape = shapes(min_idx);
 
-% figure;
-% plot(shapes, eigenvalue_Max_errors, 'o-');
-% hold on;
+figure;
+plot(shapes, eigenvalue_Max_errors, 'o-');
+hold on;
 
-% % Highlight the minimum error point with a distinct marker
-% plot(best_shape, min_error, 'ro', 'MarkerSize', 10, 'LineWidth', 2); % Red circle
+% Highlight the minimum error point with a distinct marker
+plot(best_shape, min_error, 'ro', 'MarkerSize', 10, 'LineWidth', 2); % Red circle
 
-% % Add a text label with an arrow
-% text(best_shape, min_error, ...
-%     sprintf('\\leftarrow Minimum Error: %.2e\n(Shape = %.2f)', min_error, best_shape), ...
-%     'VerticalAlignment', 'middle', ...
-%     'HorizontalAlignment', 'right', ...
-%     'FontSize', 10);
-% xlabel('Shape Parameter');
-% ylabel('Max Error');
-% title('Max Error of USING GHOST POINTS(FIXED SHAPE PARAMETER)');
+% Add a text label with an arrow
+text(best_shape, min_error, ...
+    sprintf('\\leftarrow Minimum Error: %.2e\n(Shape = %.2f)', min_error, best_shape), ...
+    'VerticalAlignment', 'middle', ...
+    'HorizontalAlignment', 'right', ...
+    'FontSize', 10);
+xlabel('Shape Parameter');
+ylabel('Max Error');
+title('Max Error of USING GHOST POINTS(FIXED SHAPE PARAMETER)');
 
 % Plot the absolute error of eigenmodes
 % plot_eigenmode_abs_error(nodes,shapes,max_err_eigenmodes,l,m);
 
-% Plot the relative error of eigenmodes
+% % Plot the relative error of eigenmodes
 % plot_eigenmode_rel_error(nodes,shapes,relative_err_eigenmodes,l,m);
 
 % Plot the RMS error of eigenmodes

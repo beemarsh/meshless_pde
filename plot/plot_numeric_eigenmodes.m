@@ -1,4 +1,4 @@
-function plot_numeric_eigenmodes(n, coordinates, X, Y, interior_idx, num_interior_pts, normf, alpha, shape)
+function plot_numeric_eigenmodes(n, coordinates, X, Y, interior_idx, num_interior_pts, normf, alpha, shape, description)
 %PLOT_NUMERIC_EIGENMODES Plots the computed numerical eigenmodes as surface plots.
 %
 %   This function takes the computed eigenmodes and visualizes them as
@@ -9,6 +9,11 @@ function plot_numeric_eigenmodes(n, coordinates, X, Y, interior_idx, num_interio
 %   n: The number of eigenmodes to plot.
 % All the inputs are the varialbles used in kansa method.
 % Create a figure for the plots
+
+if nargin < 10
+    description = "Numerical Eigenmodes"; % Default description if not provided
+end
+
 figure;
 
 % Loop through each eigenmode and plot it
@@ -30,7 +35,9 @@ for j=1:n
     hold on;
     axis equal;
     axis([0,1,0,1]);
-    title("Numerical Eigenmodes for Shape Parameter : " + shape);
+    title("Shape = " + shape);
 end
+
+sgtitle(description, 'FontSize', 14, 'FontWeight', 'bold');
 
 end

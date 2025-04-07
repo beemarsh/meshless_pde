@@ -5,5 +5,5 @@ function [ value ] = laplacian_rbf_2D( c, r )
 import rbf.*;
 % value = 2 * c.^2 .* (rbf(c, r) .^ 2 + 1) ./rbf(c, r).^3;
 
-value = ( 2 * (c.^ 2)./ rbf(c, r) ) - ( (c .^ 4) .* ( r.^2)./(rbf(c, r).^3) );
+value = ( 2 * (c.^ 2)./ nmq_rbf(c, r) ) - ( (c .^ 4) .* ( r.^2)./(nmq_rbf(c, r).^3) );
 end

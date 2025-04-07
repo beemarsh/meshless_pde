@@ -1,10 +1,12 @@
-function plot_abs_error(n , coordinates, X, Y, interior_idx, num_interior_pts, normf, alpha, exact_eigenmode, shape)
+function plot_abs_error(n , coordinates, X, Y, interior_idx, num_interior_pts, normf, alpha, exact_eigenmode, shape, description)
 % PLOT_ABS_ERROR Plots the absolute contour errors of eigenmodes.
 %
 % Inputs:
 % n: The number of eigenmodes to plot.
 % All the inputs are the varialbles used in kansa method.
-
+if nargin < 11
+    description = "Numerical Eigenmodes"; % Default description if not provided
+end
 % Create a new figure for the plots
 figure;
 
@@ -32,6 +34,8 @@ for j=1:n
     axis([0,1,0,1]);
 
     % Set the title of the subplot to display the shape parameter used.
-    title("Absolute Error for Shape Parameter : " + shape);
+    title("Shape = " + shape);
 end
+
+sgtitle(description, 'FontSize', 14, 'FontWeight', 'bold');
 end

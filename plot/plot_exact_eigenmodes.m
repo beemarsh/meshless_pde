@@ -1,4 +1,4 @@
-function plot_exact_eigenmodes(n, exact_eigenmode, X, Y, shape)
+function plot_exact_eigenmodes(n, exact_eigenmode, X, Y, shape, description)
 %PLOT_EXACT_EIGENMODES Plots the exact eigenmodes as surface plots.
 %
 %   This function visualizes the exact eigenmodes by plotting them as surface plots
@@ -9,6 +9,11 @@ function plot_exact_eigenmodes(n, exact_eigenmode, X, Y, shape)
 % All the inputs are the varialbles used in kansa method.
 
 % Create a new figure for the plots
+
+if nargin < 6
+    description = "Exact Eigenmodes"; % Default description if not provided
+end
+
 figure
 
 % Loop through the first 9 eigenmodes and plot them
@@ -29,6 +34,8 @@ for j=1:n
     hold on;
     axis equal;
     axis([0,1,0,1]);
-    title("Exact Eigenmodes for Shape Parameter : " + shape);
+    title("Shape = " + shape);
 end
+sgtitle(description, 'FontSize', 14, 'FontWeight', 'bold');
+
 end
